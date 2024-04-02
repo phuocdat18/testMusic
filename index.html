@@ -157,25 +157,29 @@
                         wordEndTime = parseFloat(nextWord.getAttribute('va'));
                     }
 
+                    const text = word.textContent.trim();
+                    let wordHighlighted = false;
+
                     if (currentTime >= wordStartTime && currentTime < wordEndTime) {
-                        const text = word.textContent.trim();
                         for (let i = 0; i < text.length; i++) {
                             const charStartTime = wordStartTime + (i * 0.2);
                             const charEndTime = wordStartTime + ((i + 1) * 0.2);
-                            if (currentTime >= charStartTime && currentTime < charEndTime) {
+                            if (currentTime > charStartTime) {
                                 highlightedWords += `<span class="highlight">${text[i]}</span>`;
+                                wordHighlighted = true;
                             } else {
                                 highlightedWords += `<span>${text[i]}</span>`;
                             }
                         }
-                        highlightedWords += ' ';
                     } else {
-                        highlightedWords += `<span>${word.textContent.trim()}</span> `;
+                        highlightedWords += `<span>${text}</span>`;
                     }
+                    highlightedWords += ' ';
                 });
 
                 currentLyricElement.innerHTML = highlightedWords;
             }
+
 
 
             seekBar.addEventListener('input', function () {
