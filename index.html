@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Music Player with Lyrics</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 90vh;
+        }
+
+        .music-player {
+            height: 500px;
+            width: 300px;
+            text-align: center;
+            background-color: #add8e6;
+        }
+
+        .controls {
+            margin-top: 220px;
+        }
+
+        .time {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .lyric {
+            height: 30px;
+            margin-top: 140px;
+        }
+
+        .controls2 {
+            margin-top: 30px;
+        }
+
+        #seekBar {
+            width: 95%;
+        }
+
+        .fade {
+            opacity: 0.5;
+        }
+
+        .highlight {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="music-player">
+        <audio id="audio" src="https://storage.googleapis.com/ikara-storage/tmp/beat.mp3"></audio>
+        <div class="controls">
+            <button id="playPauseBtn"><i class="fas fa-play"></i></button>
+        </div>
+        <div class="lyric">
+            <div id="lyricsContainer"></div>
+        </div>
+        <div class="controls2">
+            <div class="time">
+                <span id="currentTime" style="margin-left: 10px;">0:00</span>
+                <span id="duration" style="margin-right: 10px;">0:00</span>
+            </div>
+            <input type="range" id="seekBar" value="0">
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const audio = document.getElementById('audio');
+            const playPauseBtn = document.getElementById('playPauseBtn');
+            const seekBar = document.getElementById('seekBar');
+            const currentTime = document.getElementById('currentTime');
+            const duration = document.getElementById('duration');
+            const lyricsContainer = document.getElementById('lyricsContainer');
+
+            let currentLyricIndex = -1;
+            let lyricParams;
+
+            playPauseBtn.addEventListener('click', function () {
+                if (audio.paused || audio.ended) {
+                    audio.play();
+                    playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                } else {
+                    audio.pause();
+                    playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                }
+            });
+
+            audio.addEventListener('timeupdate', function () {
+                const time = audio.currentTime;
+                const durationTime = audio.duration;
+                const minutes = Math.floor(time / 60);
+                const seconds = Math.floor(time % 60);
+                const durationMinutes = Math.floor(durationTime / 60);
+                const durationSeconds = Math.floor(durationTime % 60);
+                currentTime.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                duration.textContent = `${durationMinutes}:${durationSeconds < 10 ? '0' : ''}${durationSeconds}`;
+                seekBar.value = (time / durationTime) * 100 || 0;
+
+                if (lyricParams) {
+                    for (let i = 0; i < lyricParams.length; i++) {
+                        const param = lyricParams[i];
+                        const startTime = parseFloat(param.children[0].getAttribute('va'));
+                        const nextParam = lyricParams[i + 1];
+                        let endTime = audio.duration;
+                        if (nextParam) {
+                            endTime = parseFloat(nextParam.children[0].getAttribute('va'));
+                        }
+                        if (time >= startTime && time < endTime) {
+                            if (i !== currentLyricIndex) {
+                                lyricsContainer.innerHTML = '';
+
+                                const currentLyric = document.createElement('div');
+                                const words = param.textContent.trim().split(' ');
+                                const highlightedWords = words.map(word => `<span>${word}</span>`);
+                                currentLyric.innerHTML = highlightedWords.join(' ');
+                                currentLyric.classList.add('current-lyric');
+                                lyricsContainer.appendChild(currentLyric);
+
+                                if (lyricParams[i + 1]) {
+                                    const nextLyric = document.createElement('div');
+                                    nextLyric.textContent = lyricParams[i + 1].textContent.trim();
+                                    nextLyric.classList.add('fade');
+                                    lyricsContainer.appendChild(nextLyric);
+                                }
+
+                                currentLyricIndex = i;
+                            }
+                            highlightCurrentWord(param, startTime, endTime);
+                            break;
+                        }
+                    }
+                }
+            });
+
+
+            function highlightCurrentWord(param, startTime, endTime) {
+                const currentLyricElement = lyricsContainer.querySelector('.current-lyric');
+                const words = Array.from(param.getElementsByTagName('i'));
+                const currentTime = audio.currentTime;
+
+                let highlightedWords = '';
+
+                words.forEach(word => {
+                    const wordStartTime = parseFloat(word.getAttribute('va'));
+                    const nextWord = word.nextElementSibling;
+                    let wordEndTime = endTime;
+
+                    if (nextWord !== null) {
+                        wordEndTime = parseFloat(nextWord.getAttribute('va'));
+                    }
+
+                    if (currentTime >= wordStartTime && currentTime < wordEndTime) {
+                        const text = word.textContent.trim();
+                        for (let i = 0; i < text.length; i++) {
+                            const charStartTime = wordStartTime + (i * 0.2);
+                            const charEndTime = wordStartTime + ((i + 1) * 0.2);
+                            if (currentTime >= charStartTime && currentTime < charEndTime) {
+                                highlightedWords += `<span class="highlight">${text[i]}</span>`;
+                            } else {
+                                highlightedWords += `<span>${text[i]}</span>`;
+                            }
+                        }
+                        highlightedWords += ' ';
+                    } else {
+                        highlightedWords += `<span>${word.textContent.trim()}</span> `;
+                    }
+                });
+
+                currentLyricElement.innerHTML = highlightedWords;
+            }
+
+
+            seekBar.addEventListener('input', function () {
+                const seekTime = (audio.duration * (seekBar.value / 100));
+                audio.currentTime = seekTime;
+            });
+
+            audio.addEventListener('ended', function () {
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+            });
+
+            fetch('https://storage.googleapis.com/ikara-storage/ikara/lyrics.xml')
+                .then(response => response.text())
+                .then(data => {
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(data, 'text/xml');
+                    lyricParams = xmlDoc.querySelectorAll('param');
+                })
+                .catch(error => {
+                    console.error('Error fetching lyrics:', error);
+                });
+        });
+    </script>
+
+</body>
+
+</html>
