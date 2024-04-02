@@ -100,30 +100,30 @@
                 const seconds = Math.floor(time % 60);
                 const durationMinutes = Math.floor(durationTime / 60);
                 const durationSeconds = Math.floor(durationTime % 60);
-                currentTime.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                currentTime.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`; 
                 duration.textContent = `${durationMinutes}:${durationSeconds < 10 ? '0' : ''}${durationSeconds}`;
                 seekBar.value = (time / durationTime) * 100 || 0;
 
-                if (lyricParams) {
-                    for (let i = 0; i < lyricParams.length; i++) {
+                if (lyricParams) { 
+                    for (let i = 0; i < lyricParams.length; i++) { 
                         const param = lyricParams[i];
                         const startTime = parseFloat(param.children[0].getAttribute('va'));
                         const nextParam = lyricParams[i + 1];
                         let endTime = audio.duration;
-                        if (nextParam) {
+                        if (nextParam) { 
                             endTime = parseFloat(nextParam.children[0].getAttribute('va'));
                         }
-                        if (time >= startTime && time < endTime) {
+                        if (time >= startTime && time < endTime) { 
                             lyricsContainer.innerHTML = '';
 
                             const currentLyric = document.createElement('div');
                             const words = param.textContent.trim().split(' ');
-                            const highlightedWords = words.map(word => `<span>${word}</span>`);
+                            const highlightedWords = words.map(word => `<span>${word}</span>`); 
                             currentLyric.innerHTML = highlightedWords.join(' ');
-                            currentLyric.classList.add('current-lyric');
-                            lyricsContainer.appendChild(currentLyric);
+                            currentLyric.classList.add('current-lyric'); 
+                            lyricsContainer.appendChild(currentLyric); 
 
-                            if (lyricParams[i + 1]) {
+                            if (lyricParams[i + 1]) { 
                                 const nextLyric = document.createElement('div');
                                 nextLyric.textContent = lyricParams[i + 1].textContent.trim();
                                 nextLyric.classList.add('fade');
@@ -141,39 +141,33 @@
 
 
             function highlightCurrentWord(param, startTime, endTime) {
-                const currentLyricElement = lyricsContainer.querySelector('.current-lyric');
-                const words = Array.from(param.getElementsByTagName('i'));
+                const currentLyricElement = lyricsContainer.querySelector('.current-lyric'); 
+                const words = Array.from(param.getElementsByTagName('i')); 
                 const currentTime = audio.currentTime;
 
                 let highlightedWords = '';
 
-                words.forEach(word => {
-                    const wordStartTime = parseFloat(word.getAttribute('va'));
-                    const nextWord = word.nextElementSibling;
+                words.forEach(word => { 
+                    const wordStartTime = parseFloat(word.getAttribute('va')); 
+                    const nextWord = word.nextElementSibling; 
                     let wordEndTime = endTime;
 
-                    if (nextWord !== null) {
-                        wordEndTime = parseFloat(nextWord.getAttribute('va'));
+                    if (nextWord !== null) { 
+                        wordEndTime = parseFloat(nextWord.getAttribute('va')); 
                     }
 
-                    const text = word.textContent.trim();
+                    const text = word.textContent.trim(); 
 
-                    if (currentTime >= wordStartTime && currentTime < wordEndTime) {
-                        for (let i = 0; i < text.length; i++) {
-                            const charStartTime = wordStartTime + (i * 0.2);
-                            const charEndTime = wordStartTime + ((i + 1) * 0.2);
-                            if (currentTime > charStartTime) {
-                                highlightedWords += `<span class="highlight">${text[i]}</span>`;
-                            } else {
-                                highlightedWords += `<span>${text[i]}</span>`;
-                            }
+                    for (let i = 0; i < text.length; i++) {
+                        const charStartTime = wordStartTime + (i * 0.1); 
+                        if (currentTime > charStartTime) { 
+                            highlightedWords += `<span class="highlight">${text[i]}</span>`;
+                        } else {
+                            highlightedWords += `<span>${text[i]}</span>`;
                         }
-                    } else {
-                        highlightedWords += `<span>${text}</span>`;
                     }
                     highlightedWords += ' ';
                 });
-
                 currentLyricElement.innerHTML = highlightedWords;
             }
 
