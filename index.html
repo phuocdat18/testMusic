@@ -31,12 +31,7 @@
         }
 
         .lyric {
-            height: 30px;
-            margin-top: 140px;
-        }
-
-        .controls2 {
-            margin-top: 30px;
+            margin-top: 130px;
         }
 
         #seekBar {
@@ -79,8 +74,8 @@
             const lyricsCanvas = document.getElementById('lyricsCanvas');
             const ctx = lyricsCanvas.getContext('2d');
 
-            lyricsCanvas.width = 400;
-            lyricsCanvas.height = 40;
+            lyricsCanvas.width = 300;
+            lyricsCanvas.height = 75;
 
             let currentLyricIndex = -1;
             let lyricParams;
@@ -117,16 +112,8 @@
                         }
                         if (time >= startTime && time < endTime) {
                             ctx.clearRect(0, 0, lyricsCanvas.width, lyricsCanvas.height);
-
-                            const currentLyric = param.textContent.trim();
-                            const words = currentLyric.split(' ');
-                            const highlightedWords = words.map(word => `${word}`);
-                            if (lyricParams[i + 1]) {
-                                const nextLyric = lyricParams[i + 1].textContent.trim();
-                                drawLyric(nextLyric, 10, 40, true);
-                            }
-
-                            currentLyricIndex = i;
+                            const Lyric = lyricParams[i + 1].textContent.trim().split(/\s+/).filter(word => word !== '').join(' ');
+                            drawLyric(Lyric, 10, 50, true);
                             highlightCurrentWord(param, startTime, endTime);
                             break;
                         }
@@ -134,15 +121,32 @@
                 }
             });
 
+            const maxWidth = 280;
+
             function drawLyric(text, x, y, faded = false) {
-                const maxWidth = 300;
                 if (faded) {
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
                 } else {
                     ctx.fillStyle = '#000';
                 }
-                ctx.font = '16px Arial';
-                ctx.fillText(text, x, y);
+                ctx.font = '15px Arial';
+
+                let words = text.split(' ');
+                let line = '';
+                let lineHeight = ctx.measureText('M').width;
+
+                for (let i = 0; i < words.length; i++) {
+                    let testLine = line + words[i] + ' ';
+                    let testWidth = ctx.measureText(testLine).width;
+                    if (testWidth > maxWidth && i > 0) {
+                        ctx.fillText(line, x, y);
+                        line = words[i] + ' ';
+                        y += lineHeight;
+                    } else {
+                        line = testLine;
+                    }
+                }
+                ctx.fillText(line, x, y);
             }
 
             function highlightCurrentWord(param, startTime, endTime) {
@@ -151,6 +155,7 @@
 
                 let x = 10;
                 let y = 20;
+                let lineHeight = ctx.measureText('M').width;
 
                 words.forEach(word => {
                     const wordStartTime = parseFloat(word.getAttribute('va'));
@@ -162,6 +167,16 @@
                     }
 
                     const text = word.textContent.trim();
+
+                    let wordWidth = 0;
+                    for (let i = 0; i < text.length; i++) {
+                        wordWidth += ctx.measureText(text[i]).width;
+                    }
+
+                    if (x + wordWidth > (10 + maxWidth)) {
+                        x = 10;
+                        y += lineHeight;
+                    }
 
                     for (let i = 0; i < text.length; i++) {
                         const charStartTime = wordStartTime + (i * 0.1);
@@ -176,6 +191,8 @@
                     x += ctx.measureText(' ').width;
                 });
             }
+
+
 
             seekBar.addEventListener('input', function () {
                 const seekTime = (audio.duration * (seekBar.value / 100));
