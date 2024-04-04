@@ -91,32 +91,32 @@
             });
 
             audio.addEventListener('timeupdate', function () {
-                const time = audio.currentTime;
-                const durationTime = audio.duration;
-                const minutes = Math.floor(time / 60);
-                const seconds = Math.floor(time % 60);
-                const durationMinutes = Math.floor(durationTime / 60);
-                const durationSeconds = Math.floor(durationTime % 60);
-                currentTime.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                const time = audio.currentTime; 
+                const durationTime = audio.duration; 
+                const minutes = Math.floor(time / 60); 
+                const seconds = Math.floor(time % 60); 
+                const durationMinutes = Math.floor(durationTime / 60); 
+                const durationSeconds = Math.floor(durationTime % 60); 
+                currentTime.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`; 
                 duration.textContent = `${durationMinutes}:${durationSeconds < 10 ? '0' : ''}${durationSeconds}`;
                 seekBar.value = (time / durationTime) * 100 || 0;
 
-                if (lyricParams) {
-                    for (let i = 0; i < lyricParams.length; i++) {
+                if (lyricParams) { /
+                    for (let i = 0; i < lyricParams.length; i++) { 
                         const param = lyricParams[i];
-                        const startTime = parseFloat(param.children[0].getAttribute('va'));
-                        const nextParam = lyricParams[i + 1];
+                        const startTime = parseFloat(param.children[0].getAttribute('va')); 
+                        const nextParam = lyricParams[i + 1]; 
                         let endTime = audio.duration;
-                        if (nextParam) {
+                        if (nextParam) { 
                             endTime = parseFloat(nextParam.children[0].getAttribute('va'));
                         } else {
                             endTime = parseFloat(param.children[param.children.length - 1].getAttribute('va'));
                         }
-                        if (time >= startTime && time < endTime) {
-                            ctx.clearRect(0, 0, lyricsCanvas.width, lyricsCanvas.height);
-                            highlightCurrentWord(param, startTime, endTime);
-                            const Lyric = lyricParams[i + 1].textContent.trim().split(/\s+/).filter(word => word !== '').join(' ');
-                            drawLyric(Lyric, 10, 50, true);
+                        if (time >= startTime && time < endTime) { 
+                            ctx.clearRect(0, 0, lyricsCanvas.width, lyricsCanvas.height); 
+                            highlightCurrentWord(param, startTime, endTime); 
+                            const Lyric = lyricParams[i + 1].textContent.trim().split(/\s+/).filter(word => word !== '').join(' '); 
+                            drawLyric(Lyric, 10, 50, true); 
                             break;
                         }
                     }
@@ -127,63 +127,70 @@
 
             function drawLyric(text, x, y, faded = false) {
                 if (faded) {
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; 
                 } else {
                     ctx.fillStyle = '#000';
                 }
-                ctx.font = '15px Arial';
+                ctx.font = '15px Arial'; 
 
-                let words = text.split(' ');
+                let words = text.split(' '); 
                 let line = '';
-                let lineHeight = ctx.measureText('M').width;
+                let lineHeight = ctx.measureText('M').width; 
 
-                for (let i = 0; i < words.length; i++) {
-                    let testLine = line + words[i] + ' ';
-                    let testWidth = ctx.measureText(testLine).width;
+                for (let i = 0; i < words.length; i++) { 
+                    let testLine = line + words[i] + ' '; 
+                    let testWidth = ctx.measureText(testLine).width; 
                     if (testWidth > maxWidth && i > 0) {
                         ctx.fillText(line, x, y);
-                        line = words[i] + ' ';
-                        y += lineHeight;
+                        line = words[i] + ' '; 
+                        y += lineHeight; 
                     } else {
                         line = testLine;
                     }
                 }
-                ctx.fillText(line, x, y);
+                ctx.fillText(line, x, y); 
             }
 
             function highlightCurrentWord(param, startTime, endTime) {
-                const words = Array.from(param.getElementsByTagName('i'));
+                const words = Array.from(param.getElementsByTagName('i')); 
                 const currentTime = audio.currentTime;
 
                 let x = 10;
                 let y = 20;
-                let lineHeight = ctx.measureText('M').height;
+                let lineHeight = ctx.measureText('M').width; 
 
-                words.forEach(word => {
-                    const wordStartTime = parseFloat(word.getAttribute('va'));
-                    const nextWord = word.nextElementSibling;
-                    let wordEndTime = endTime;
+                words.forEach(word => { 
+                    const wordStartTime = parseFloat(word.getAttribute('va')); 
+                    const nextWord = word.nextElementSibling; 
+                    let wordEndTime;
 
                     if (nextWord !== null) {
-                        wordEndTime = parseFloat(nextWord.getAttribute('va'));
+                        wordEndTime = parseFloat(nextWord.getAttribute('va')); 
                     } else {
                         wordEndTime = endTime;
                     }
 
-                    const text = word.textContent.trim();
+                    const text = word.textContent.trim(); 
+                    const wordDuration = wordEndTime - wordStartTime; 
 
-                    let wordWidth = 0;
+                    let wordWidth = 0; 
                     for (let i = 0; i < text.length; i++) {
-                        wordWidth += ctx.measureText(text[i]).width;
+                        wordWidth += ctx.measureText(text[i]).width; 
+                    }
+
+                    let timeKytu = wordDuration / text.length; 
+         
+                    if (timeKytu >= 0.7) {
+                        timeKytu = 0.7;
                     }
 
                     if (x + wordWidth > (10 + maxWidth)) {
-                        x = 10;
-                        y += lineHeight;
+                        x = 10; 
+                        y += lineHeight; 
                     }
 
                     for (let i = 0; i < text.length; i++) {
-                        const charStartTime = wordStartTime + (i * 0.1);
+                        const charStartTime = wordStartTime + (i * timeKytu); 
                         if (currentTime > charStartTime) {
                             ctx.fillStyle = 'red';
                         } else {
@@ -192,11 +199,9 @@
                         ctx.fillText(text[i], x, y);
                         x += ctx.measureText(text[i]).width;
                     }
-                    x += ctx.measureText(' ').width;
+                    x += ctx.measureText(' ').width; 
                 });
             }
-
-
 
             seekBar.addEventListener('input', function () {
                 const seekTime = (audio.duration * (seekBar.value / 100));
